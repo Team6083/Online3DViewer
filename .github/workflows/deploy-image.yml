@@ -36,5 +36,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: |
-            ghcr.io/team6083/viewer:${{ steps.v.outputs.version }}
-            ghcr.io/team6083/viewer:latest
+            ghcr.io/team6083/online3dviewer:${{ steps.v.outputs.version }}
+            ghcr.io/team6083/online3dviewer:latest
