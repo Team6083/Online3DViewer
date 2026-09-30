@@ -102,43 +102,29 @@ export class ColorToMaterialConverter
 	}
 }
 
-let occtWorkerUrl = null;
-
+// Self-hosted, not CDN (internal deployment requires connect-src/script-src
+// 'self' only): the worker script is same-origin, so it can be constructed
+// directly instead of upstream's fetch+Blob-URL rewrite dance, which exists
+// only to get a cross-origin CDN script past the same-origin Worker
+// restriction.
 export function CreateOcctWorker (worker)
 {
-	return new Promise ((resolve, reject) => {
-		if (occtWorkerUrl !== null) {
-			resolve (new Worker (occtWorkerUrl));
-			return;
-		}
-
-		let baseUrl = 'https://cdn.jsdelivr.net/npm/occt-import-js@0.0.22/dist/';
-		fetch (baseUrl + 'occt-import-js-worker.js')
-			.then ((response) => {
-				if (!response.ok) {
-					return reject ();
-				}
-				return response.text ();
-			})
-			.then ((workerScript) => {
-				workerScript = workerScript.replace ('occt-import-js.js', baseUrl + 'occt-import-js.js');
-				workerScript = workerScript.replace ('return path', 'return \'' + baseUrl + 'occt-import-js.wasm\'');
-				let blob = new Blob ([workerScript], { type : 'text/javascript' });
-				occtWorkerUrl = URL.createObjectURL (blob);
-				return resolve (new Worker (occtWorkerUrl));
-			})
-			.catch (reject);
+	return new Promise ((resolve) => {
+		resolve (new Worker ('assets/extlibs/occt-import-js/occt-import-js-worker.js'));
 	});
 }
 
 export function LoadExternalLibrary (libraryName)
 {
 	if (libraryName === 'rhino3dm') {
-		return LoadExternalLibraryFromUrl ('https://cdn.jsdelivr.net/npm/rhino3dm@8.17.0/rhino3dm.min.js');
+		return LoadExternalLibraryFromUrl ('assets/extlibs/rhino3dm/rhino3dm.min.js');
 	} else if (libraryName === 'webifc') {
-		return LoadExternalLibraryFromUrl ('https://cdn.jsdelivr.net/npm/web-ifc@0.0.68/web-ifc-api-iife.js');
+		return LoadExternalLibraryFromUrl ('assets/extlibs/web-ifc/web-ifc-api-iife.js');
 	} else if (libraryName === 'draco3d') {
-		return LoadExternalLibraryFromUrl ('https://cdn.jsdelivr.net/npm/draco3d@1.5.7/draco_decoder_nodejs.min.js');
+		// Upstream points at 'draco_decoder_nodejs.min.js', which doesn't
+		// actually exist in the draco3d package (only the unminified
+		// 'draco_decoder_nodejs.js' does) - already broken on the CDN too.
+		return LoadExternalLibraryFromUrl ('assets/extlibs/draco3d/draco_decoder_nodejs.js');
 	} else {
 		return null;
 	}

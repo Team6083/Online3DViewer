@@ -1,0 +1,1 @@
+GenerateHeader ('COOKIES');
